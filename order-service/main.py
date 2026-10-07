@@ -1,18 +1,26 @@
 import os
 import logging
 import random
+import uuid
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pythonjsonlogger import jsonlogger
 
 os.makedirs("/app/logs", exist_ok=True)
 
+class EventIdFilter(logging.Filter):
+    def filter(self, record):
+        record.event_id = str(uuid.uuid4())
+        return True
+
+
 logger = logging.getLogger("order-service")
 logger.setLevel(logging.INFO)
 
 log_handler = logging.FileHandler("/app/logs/order-service.log")
+log_handler.addFilter(EventIdFilter())
 formatter = jsonlogger.JsonFormatter(
-    fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
+    fmt="%(asctime)s %(levelname)s %(name)s %(event_id)s %(message)s",
     rename_fields={"levelname": "log_level", "asctime": "@timestamp", "name": "service"}
 )
 log_handler.setFormatter(formatter)
